@@ -34,9 +34,7 @@ export default function FamilyNodeCard({
   const content = (
     <div
       onClick={onClickCard}
-      className={`group py-2 px-1 w-20 sm:w-24 md:w-28 flex flex-col items-center justify-start transition-all duration-300 hover:-translate-y-1 hover:shadow-xl relative bg-white/70 rounded-2xl
-        ${isDeceased ? "grayscale-[0.4] opacity-80" : ""}
-      `}
+      className={`group py-2 px-1 flex flex-col items-center justify-start transition-all duration-300 hover:-translate-y-1 hover:shadow-xl relative bg-white/70 rounded-2xl${isDeceased ? " grayscale-[0.4] opacity-80" : ""}${showAvatar ? " w-20 sm:w-24 md:w-28 h-22 sm:h-26 md:h-28" : " px-2 w-18 h-20"}`}
     >
       {isRingVisible && (
         <div className="absolute top-[15%] -left-2.5 sm:-left-4 size-5 sm:size-6 rounded-full shadow-sm bg-white z-100 flex items-center justify-center text-[10px] sm:text-sm">
@@ -95,8 +93,8 @@ export default function FamilyNodeCard({
 
       {/* 2. Gender Icon + Name */}
       <div className="flex flex-col items-center justify-center gap-1 w-full px-0.5 sm:px-1 relative z-10">
-        <span
-          className={`text-[10px] sm:text-[11px] md:text-xs font-bold text-center leading-tight line-clamp-2 transition-colors cursor-pointer
+        <div
+          className={`text-[10px] sm:text-[11px] md:text-xs font-bold text-center leading-tight transition-colors cursor-pointer
             ${onClickName ? "text-stone-800 group-hover:text-amber-700 hover:underline" : "text-stone-800 group-hover:text-amber-800"}`}
           title={person.full_name}
           onClick={(e) => {
@@ -107,8 +105,14 @@ export default function FamilyNodeCard({
             }
           }}
         >
-          {person.full_name}
-        </span>
+          {showAvatar
+            ? person.full_name
+            : person.full_name.split(" ").map((word, i) => (
+                <span key={i} className="block">
+                  {word}
+                </span>
+              ))}
+        </div>
         {/* {person.birth_order != null && (
           <span className="text-[9px] sm:text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-amber-50 text-amber-600 border border-amber-200/60 leading-none">
             {person.birth_order === 1 ? "Trưởng" : `Thứ ${person.birth_order}`}

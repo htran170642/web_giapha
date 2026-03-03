@@ -1,14 +1,27 @@
 "use client";
 
-import { computeEvents, FamilyEvent, CustomEventRecord } from "@/utils/eventHelpers";
 import { getZodiacSign } from "@/utils/dateHelpers";
+import {
+  computeEvents,
+  CustomEventRecord,
+  FamilyEvent,
+} from "@/utils/eventHelpers";
 import { motion } from "framer-motion";
+import {
+  AlignLeft,
+  Cake,
+  CalendarDays,
+  Clock,
+  Flower,
+  MapPin,
+  Plus,
+  Star,
+} from "lucide-react";
 import { Solar } from "lunar-javascript";
-import { Cake, CalendarDays, Clock, Flower, Star, MapPin, AlignLeft, Plus } from "lucide-react";
-import { useMemo, useState } from "react";
-import { useDashboard } from "./DashboardContext";
-import CustomEventModal from "./CustomEventModal";
 import { useRouter } from "next/navigation";
+import { useMemo, useState } from "react";
+import CustomEventModal from "./CustomEventModal";
+import { useDashboard } from "./DashboardContext";
 
 interface EventsListProps {
   persons: {
@@ -37,7 +50,15 @@ function daysUntilLabel(days: number): string {
   return `${Math.ceil(days / 30)} tháng nữa`;
 }
 
-function EventCard({ event, index, onEditCustomEvent }: { event: FamilyEvent; index: number; onEditCustomEvent: (e: FamilyEvent) => void }) {
+function EventCard({
+  event,
+  index,
+  onEditCustomEvent,
+}: {
+  event: FamilyEvent;
+  index: number;
+  onEditCustomEvent: (e: FamilyEvent) => void;
+}) {
   const isBirthday = event.type === "birthday";
   const isCustom = event.type === "custom_event";
   const isToday = event.daysUntil === 0;
@@ -93,19 +114,28 @@ function EventCard({ event, index, onEditCustomEvent }: { event: FamilyEvent; in
       {/* Info */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <p className={`font-semibold text-stone-800 truncate transition-colors group-hover:text-amber-700`}>
+          <p
+            className={`font-semibold text-stone-800 truncate transition-colors group-hover:text-amber-700`}
+          >
             {event.personName}
           </p>
-          {isBirthday && event.originDay && event.originMonth && getZodiacSign(event.originDay, event.originMonth) && (
-            <span className="shrink-0 text-[10px] font-sans font-bold text-indigo-700 bg-indigo-50 border border-indigo-200/60 rounded-md px-1.5 py-0.5 whitespace-nowrap shadow-xs tracking-wider">
-              {getZodiacSign(event.originDay, event.originMonth)}
-            </span>
-          )}
+          {isBirthday &&
+            event.originDay &&
+            event.originMonth &&
+            getZodiacSign(event.originDay, event.originMonth) && (
+              <span className="shrink-0 text-[10px] font-sans font-bold text-indigo-700 bg-indigo-50 border border-indigo-200/60 rounded-md px-1.5 py-0.5 whitespace-nowrap shadow-xs tracking-wider">
+                {getZodiacSign(event.originDay, event.originMonth)}
+              </span>
+            )}
         </div>
         <div className="flex flex-col gap-1 mt-1">
           <p className="text-sm text-stone-500 flex items-center gap-1.5 leading-tight">
             <CalendarDays className="size-3.5 shrink-0" />
-            {isBirthday ? "Sinh nhật" : isCustom ? "Sự kiện" : "Ngày giỗ"} —{" "}
+            {isBirthday
+              ? "Sinh nhật"
+              : isCustom
+                ? "Sự kiện"
+                : "Ngày giỗ"} —{" "}
             <span className="font-medium text-stone-600">
               {event.eventDateLabel}
             </span>
@@ -145,7 +175,10 @@ function EventCard({ event, index, onEditCustomEvent }: { event: FamilyEvent; in
   );
 }
 
-export default function EventsList({ persons, customEvents = [] }: EventsListProps) {
+export default function EventsList({
+  persons,
+  customEvents = [],
+}: EventsListProps) {
   const router = useRouter();
   const [filter, setFilter] = useState<
     "all" | "birthday" | "death_anniversary" | "custom_event"
@@ -155,10 +188,11 @@ export default function EventsList({ persons, customEvents = [] }: EventsListPro
 
   // Custom Event Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingCustomEvent, setEditingCustomEvent] = useState<CustomEventRecord | null>(null);
+  const [editingCustomEvent, setEditingCustomEvent] =
+    useState<CustomEventRecord | null>(null);
 
   const handleOpenEditModal = (event: FamilyEvent) => {
-    const rawEvent = customEvents.find(ce => ce.id === event.personId);
+    const rawEvent = customEvents.find((ce) => ce.id === event.personId);
     if (rawEvent) {
       setEditingCustomEvent(rawEvent);
       setIsModalOpen(true);
@@ -182,7 +216,7 @@ export default function EventsList({ persons, customEvents = [] }: EventsListPro
       const solar = Solar.fromYmd(
         today.getFullYear(),
         today.getMonth() + 1,
-        today.getDate()
+        today.getDate(),
       );
       const lunar = solar.getLunar();
       const lMonthRaw = lunar.getMonth();
@@ -196,7 +230,10 @@ export default function EventsList({ persons, customEvents = [] }: EventsListPro
     return { solar: solarStr, lunar: lunarStr };
   });
 
-  const allEvents = useMemo(() => computeEvents(persons, customEvents), [persons, customEvents]);
+  const allEvents = useMemo(
+    () => computeEvents(persons, customEvents),
+    [persons, customEvents],
+  );
 
   const filtered = useMemo(() => {
     let result = allEvents;
@@ -243,7 +280,9 @@ export default function EventsList({ persons, customEvents = [] }: EventsListPro
               <span className="text-xl shrink-0 leading-none">🎊</span>
               <p className="text-sm font-medium text-amber-800 leading-tight">
                 {todayCount > 0 && (
-                  <span className="font-bold">{todayCount} sự kiện hôm nay</span>
+                  <span className="font-bold">
+                    {todayCount} sự kiện hôm nay
+                  </span>
                 )}
                 {todayCount > 0 && soonCount > 0 && " · "}
                 {soonCount > 0 && (
@@ -253,11 +292,8 @@ export default function EventsList({ persons, customEvents = [] }: EventsListPro
             </div>
           )}
         </div>
-        
-        <button
-          onClick={handleOpenCreateModal}
-          className="shrink-0 self-start sm:self-auto flex items-center gap-1.5 px-4 py-2 bg-amber-600 text-white rounded-xl hover:bg-amber-700 font-semibold text-sm shadow-sm transition-all hover:shadow hover:-translate-y-0.5"
-        >
+
+        <button onClick={handleOpenCreateModal} className="btn-primary">
           <Plus className="size-4" />
           <span>Thêm sự kiện</span>
         </button>
