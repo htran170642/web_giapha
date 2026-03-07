@@ -1,5 +1,3 @@
-export const preferredRegion = "bom1"; // Mumbai — same region as Supabase, minimizes DB latency
-
 import config from "@/app/config";
 import DashboardHeader from "@/components/DashboardHeader";
 import Footer from "@/components/Footer";
