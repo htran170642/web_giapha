@@ -26,7 +26,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
   const [memberModalId, setMemberModalId] = useState<string | null>(null);
   const [showCreateMember, setShowCreateMember] = useState(false);
   const [showAvatar, setShowAvatar] = useState<boolean>(true);
-  const [view, setViewState] = useState<ViewMode>("list");
+  const [view, setViewState] = useState<ViewMode>("tree");
   const [rootId, setRootIdState] = useState<string | null>(null);
 
   // Initialize from URL once on mount (or when searchParams actually change from server init)
@@ -135,7 +135,7 @@ export function useDashboard(): DashboardState {
       setShowCreateMember: () => {},
       showAvatar: true,
       setShowAvatar: () => {},
-      view: "list",
+      view: "tree",
       setView: () => {},
       rootId: null,
       setRootId: () => {},
