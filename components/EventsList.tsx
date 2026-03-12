@@ -38,15 +38,22 @@ interface EventsListProps {
   customEvents?: CustomEventRecord[];
 }
 
-const DAY_LABELS: Record<number, string> = {
-  0: "Hôm nay",
-  1: "Ngày mai",
+const DAY_LABELS: Record<string, string> = {
+  "-1": "Hôm qua",
+  "0": "Hôm nay",
+  "1": "Ngày mai",
 };
 
 const WEEKDAY_VI = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
 
 function daysUntilLabel(days: number): string {
-  if (days in DAY_LABELS) return DAY_LABELS[days];
+  if (days.toString() in DAY_LABELS) return DAY_LABELS[days.toString()];
+  if (days < 0) {
+    const abs = Math.abs(days);
+    if (abs <= 30) return `${abs} ngày trước`;
+    if (abs <= 60) return `${Math.ceil(abs / 7)} tuần trước`;
+    return `${Math.ceil(abs / 30)} tháng trước`;
+  }
   if (days <= 30) return `${days} ngày nữa`;
   if (days <= 60) return `${Math.ceil(days / 7)} tuần nữa`;
   return `${Math.ceil(days / 30)} tháng nữa`;
@@ -70,7 +77,8 @@ function EventCard({
   const isBirthday = event.type === "birthday";
   const isCustom = event.type === "custom_event";
   const isToday = event.daysUntil === 0;
-  const isSoon = event.daysUntil <= 7;
+  const isPast = event.daysUntil < 0;
+  const isSoon = event.daysUntil > 0 && event.daysUntil <= 7;
 
   const { setMemberModalId } = useDashboard();
 
@@ -172,9 +180,11 @@ function EventCard({
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold ${
             isToday
               ? "bg-amber-400 text-white"
-              : isSoon
-                ? "bg-red-100 text-red-600"
-                : "bg-stone-100 text-stone-500"
+              : isPast
+                ? "bg-stone-200 text-stone-600 opacity-80"
+                : isSoon
+                  ? "bg-red-100 text-red-600"
+                  : "bg-stone-100 text-stone-500"
           }`}
         >
           <Clock className="size-3" />
@@ -262,7 +272,9 @@ export default function EventsList({
   }, [allEvents, filter, showDeceasedBirthdays]);
 
   // Split into upcoming (within 365 days) and far away
-  const upcoming = filtered.filter((e) => e.daysUntil <= 365);
+  const upcoming = filtered.filter(
+    (e) => (filter === "custom_event" ? true : e.daysUntil >= 0) && e.daysUntil <= 365,
+  );
   const visible = upcoming.slice(0, showCount);
 
   const todayCount = allEvents.filter((e) => e.daysUntil === 0).length;
