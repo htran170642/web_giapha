@@ -163,15 +163,20 @@ function ganZhiToVietnamese(ganZhi: string): string {
  */
 export function getTodayLunar() {
   const now = new Date();
+  const vnTimeStr = now.toLocaleString("en-US", {
+    timeZone: "Asia/Ho_Chi_Minh",
+  });
+  const vnDate = new Date(vnTimeStr);
+
   const solar = Solar.fromYmd(
-    now.getFullYear(),
-    now.getMonth() + 1,
-    now.getDate(),
+    vnDate.getFullYear(),
+    vnDate.getMonth() + 1,
+    vnDate.getDate(),
   );
   const lunar = solar.getLunar();
 
   return {
-    solarStr: now.toLocaleDateString("vi-VN", {
+    solarStr: vnDate.toLocaleDateString("vi-VN", {
       weekday: "long",
       day: "2-digit",
       month: "long",
