@@ -1,7 +1,6 @@
 "use client";
 
 import { Person } from "@/types";
-import { formatDisplayDate } from "@/utils/dateHelpers";
 import Image from "next/image";
 import { useDashboard } from "./DashboardContext";
 import DefaultAvatar from "./DefaultAvatar";
@@ -84,13 +83,9 @@ export default function PersonCard({ person }: PersonCardProps) {
               />
             </svg>
             <span className="truncate">
-              {formatDisplayDate(
-                person.birth_year,
-                person.birth_month,
-                person.birth_day,
-              )}
+              {person.birth_year || "Chưa rõ"}
               {isDeceased &&
-                ` → ${formatDisplayDate(person.death_year, person.death_month, person.death_day)}`}
+                ` → ${person.death_lunar_year || person.death_year || "Chưa rõ"}`}
             </span>
           </p>
           {(isDeceased ||

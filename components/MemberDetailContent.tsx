@@ -7,6 +7,7 @@ import {
   calculateAge,
   formatDisplayDate,
   getLunarDateString,
+  getSolarDateString,
   getZodiacAnimal,
   getZodiacSign,
 } from "@/utils/dateHelpers";
@@ -46,7 +47,10 @@ export default function MemberDetailContent({
     person.is_deceased ||
     !!person.death_year ||
     !!person.death_month ||
-    !!person.death_day;
+    !!person.death_day ||
+    !!person.death_lunar_year ||
+    !!person.death_lunar_month ||
+    !!person.death_lunar_day;
 
   const containerVariants: Variants = {
     hidden: { opacity: 0 },
@@ -255,24 +259,43 @@ export default function MemberDetailContent({
                   </div>
                   <div className="space-y-1.5 pl-4 border-l-2 border-stone-100">
                     <p className="text-stone-800 font-semibold text-sm sm:text-base">
-                      {formatDisplayDate(
-                        person.death_year,
-                        person.death_month,
-                        person.death_day,
-                      )}
+                      {person.death_day ||
+                      person.death_month ||
+                      person.death_year
+                        ? formatDisplayDate(
+                            person.death_year,
+                            person.death_month,
+                            person.death_day,
+                          )
+                        : getSolarDateString(
+                            person.death_lunar_year,
+                            person.death_lunar_month,
+                            person.death_lunar_day,
+                          ) || "Chưa rõ"}
                     </p>
                     {(person.death_year ||
                       person.death_month ||
-                      person.death_day) && (
-                      <p className="text-xs font-medium text-stone-500 flex items-center gap-1.5">
+                      person.death_day ||
+                      person.death_lunar_year ||
+                      person.death_lunar_month ||
+                      person.death_lunar_day) && (
+                      <p className="text-sm font-medium text-stone-500 flex items-center gap-1.5">
                         <span className="text-[10px] border border-stone-200/60 bg-stone-50/80 rounded px-1.5 py-0.5">
                           Âm lịch
                         </span>
-                        {getLunarDateString(
-                          person.death_year,
-                          person.death_month,
-                          person.death_day,
-                        ) || "Chưa rõ"}
+                        {person.death_lunar_day ||
+                        person.death_lunar_month ||
+                        person.death_lunar_year
+                          ? formatDisplayDate(
+                              person.death_lunar_year,
+                              person.death_lunar_month,
+                              person.death_lunar_day,
+                            )
+                          : getLunarDateString(
+                              person.death_year,
+                              person.death_month,
+                              person.death_day,
+                            ) || "Chưa rõ"}
                       </p>
                     )}
                   </div>
@@ -283,7 +306,12 @@ export default function MemberDetailContent({
               {(() => {
                 const ageData = calculateAge(
                   person.birth_year,
+                  person.birth_month,
+                  person.birth_day,
                   person.death_year,
+                  person.death_month,
+                  person.death_day,
+                  isDeceased,
                 );
                 if (!ageData) return null;
                 return (

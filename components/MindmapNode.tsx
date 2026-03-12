@@ -1,7 +1,6 @@
 "use client";
 
 import { Person, Relationship } from "@/types";
-import { formatDisplayDate } from "@/utils/dateHelpers";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import Image from "next/image";
@@ -165,13 +164,9 @@ export const MindmapNode = memo(
                           />
                         </svg>
                         <span className="truncate">
-                          {formatDisplayDate(
-                            data.person.birth_year,
-                            data.person.birth_month,
-                            data.person.birth_day,
-                          )}
+                          {data.person.birth_year || "Chưa rõ"}
                           {data.person.is_deceased &&
-                            ` → ${formatDisplayDate(data.person.death_year, data.person.death_month, data.person.death_day)}`}
+                            ` → ${data.person.death_lunar_year || data.person.death_year || "Chưa rõ"}`}
                         </span>
                       </span>
                       {(data.person.is_deceased || data.person.is_in_law) && (

@@ -41,6 +41,11 @@ export interface Person {
   occupation?: string | null;
   current_residence?: string | null;
 
+  // Lunar Date
+  death_lunar_year: number | null;
+  death_lunar_month: number | null;
+  death_lunar_day: number | null;
+
   // New fields
   is_deceased: boolean;
   is_in_law: boolean;
