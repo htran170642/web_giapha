@@ -1,21 +1,23 @@
 "use client";
 
 import PersonCard from "@/components/PersonCard";
-import { Person } from "@/types";
+import { Person, Relationship } from "@/types";
 import { ArrowUpDown, Filter, Plus, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useDashboard } from "./DashboardContext";
 
 export default function DashboardMemberList({
   initialPersons,
+  initialRelationships = [],
   canEdit = false,
 }: {
   initialPersons: Person[];
+  initialRelationships?: Relationship[];
   canEdit?: boolean;
 }) {
   const { setShowCreateMember } = useDashboard();
   const [searchTerm, setSearchTerm] = useState("");
-  const [sortOption, setSortOption] = useState("updated_desc");
+  const [sortOption, setSortOption] = useState("generation_asc");
 
   const [filterOption, setFilterOption] = useState("all");
 
@@ -54,6 +56,119 @@ export default function DashboardMemberList({
       return matchesSearch && matchesFilter;
     });
   }, [initialPersons, searchTerm, filterOption]);
+
+  // Build ordered generation groups: non-in-laws sorted by parent birth_order
+  // then own birth_order; each in-law inserted right after their spouse.
+  const generationGroups = useMemo(() => {
+    if (!sortOption.includes("generation")) return [];
+
+    const marriages = initialRelationships.filter((r) => r.type === "marriage");
+    const parentChildRels = initialRelationships.filter(
+      (r) => r.type === "biological_child" || r.type === "adopted_child",
+    );
+
+    // personsById covers ALL persons (not just filtered) for parent lookups
+    const personsById = new Map(initialPersons.map((p) => [p.id, p]));
+
+    // childParents: childId → parentId[]
+    const childParents = new Map<string, string[]>();
+    parentChildRels.forEach((r) => {
+      if (!childParents.has(r.person_b)) childParents.set(r.person_b, []);
+      childParents.get(r.person_b)!.push(r.person_a);
+    });
+
+    // Returns the full ancestry path as an array of birth_orders from root → self.
+    // e.g. great-grandchild with order 2 whose grandfather had order 1 → [1, X, 2]
+    const pathCache = new Map<string, number[]>();
+    const getAncestryPath = (personId: string, visited = new Set<string>()): number[] => {
+      if (pathCache.has(personId)) return pathCache.get(personId)!;
+      if (visited.has(personId)) return [999];
+      visited.add(personId);
+
+      const person = personsById.get(personId);
+      if (!person) return [999];
+
+      const parentIds = childParents.get(personId) ?? [];
+      const bloodParentId = parentIds.find((pid) => {
+        const p = personsById.get(pid);
+        return p && !p.is_in_law;
+      });
+
+      const ownOrder = person.birth_order ?? 999;
+      const path = bloodParentId
+        ? [...getAncestryPath(bloodParentId, visited), ownOrder]
+        : [ownOrder];
+
+      pathCache.set(personId, path);
+      return path;
+    };
+
+    const compareAncestryPaths = (a: number[], b: number[]): number => {
+      for (let i = 0; i < Math.min(a.length, b.length); i++) {
+        if (a[i] !== b[i]) return a[i] - b[i];
+      }
+      return a.length - b.length;
+    };
+
+    // Group filtered persons by generation
+    const byGen: Record<number, Person[]> = {};
+    filteredPersons.forEach((p) => {
+      const gen = p.generation ?? 0;
+      if (!byGen[gen]) byGen[gen] = [];
+      byGen[gen].push(p);
+    });
+
+    const sortedGens = Object.entries(byGen).sort(([a], [b]) =>
+      sortOption === "generation_desc"
+        ? Number(b) - Number(a)
+        : Number(a) - Number(b),
+    );
+
+    return sortedGens.map(([gen, members]) => {
+      const inLaws = members.filter((p) => p.is_in_law);
+      const nonInLaws = members
+        .filter((p) => !p.is_in_law)
+        .sort((a, b) => compareAncestryPaths(getAncestryPath(a.id), getAncestryPath(b.id)));
+
+      // Map each in-law to their spouse id (the non-in-law they're married to)
+      const inLawById = new Map(inLaws.map((p) => [p.id, p]));
+      const spouseOf = new Map<string, string>(); // inLawId → spouseId
+      marriages.forEach((r) => {
+        if (inLawById.has(r.person_a) && !inLawById.has(r.person_b)) {
+          spouseOf.set(r.person_a, r.person_b);
+        } else if (inLawById.has(r.person_b) && !inLawById.has(r.person_a)) {
+          spouseOf.set(r.person_b, r.person_a);
+        }
+      });
+
+      // Build spouse → in-laws list
+      const spouseInLaws = new Map<string, Person[]>();
+      inLaws.forEach((p) => {
+        const sid = spouseOf.get(p.id);
+        if (sid) {
+          if (!spouseInLaws.has(sid)) spouseInLaws.set(sid, []);
+          spouseInLaws.get(sid)!.push(p);
+        }
+      });
+
+      // Interleave: non-in-law then their in-law spouse(s)
+      const ordered: Person[] = [];
+      const placedInLaws = new Set<string>();
+      nonInLaws.forEach((p) => {
+        ordered.push(p);
+        (spouseInLaws.get(p.id) ?? []).forEach((inLaw) => {
+          ordered.push(inLaw);
+          placedInLaws.add(inLaw.id);
+        });
+      });
+      // Append unmatched in-laws at the end
+      inLaws.forEach((p) => {
+        if (!placedInLaws.has(p.id)) ordered.push(p);
+      });
+
+      return { gen, persons: ordered };
+    });
+  }, [filteredPersons, initialPersons, initialRelationships, sortOption]);
 
   const sortedPersons = useMemo(() => {
     return [...filteredPersons].sort((a, b) => {
@@ -188,12 +303,33 @@ export default function DashboardMemberList({
         </div>
       </div>
 
-      {sortedPersons.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {sortedPersons.map((person) => (
-            <PersonCard key={person.id} person={person} />
-          ))}
-        </div>
+      {filteredPersons.length > 0 ? (
+        sortOption.includes("generation") ? (
+          <div className="space-y-12">
+            {generationGroups.map(({ gen, persons }) => (
+                <div key={gen} className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <div className="h-px flex-1 bg-stone-200"></div>
+                    <h3 className="text-lg font-serif font-bold text-amber-800 bg-amber-50 px-4 py-1.5 rounded-full border border-amber-200/50 shadow-sm">
+                      {gen === 0 ? "Chưa xác định đời" : `Đời thứ ${gen}`}
+                    </h3>
+                    <div className="h-px flex-1 bg-stone-200"></div>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {persons.map((person) => (
+                      <PersonCard key={person.id} person={person} />
+                    ))}
+                  </div>
+                </div>
+              ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {sortedPersons.map((person) => (
+              <PersonCard key={person.id} person={person} />
+            ))}
+          </div>
+        )
       ) : (
         <div className="text-center py-12 text-stone-400 italic">
           {initialPersons.length > 0
