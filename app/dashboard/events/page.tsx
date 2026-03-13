@@ -14,7 +14,7 @@ export default async function EventsPage() {
     supabase
       .from("persons")
       .select(
-        "id, full_name, birth_year, birth_month, birth_day, death_year, death_month, death_day, is_deceased, avatar_url",
+        "id, full_name, birth_year, birth_month, birth_day, death_year, death_month, death_day, death_lunar_year, death_lunar_month, death_lunar_day, is_deceased, avatar_url",
       ),
     supabase
       .from("custom_events")

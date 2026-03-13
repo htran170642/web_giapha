@@ -1,4 +1,4 @@
-import { Solar } from "lunar-javascript";
+import { Lunar, Solar } from "lunar-javascript";
 
 export function formatDisplayDate(
   year: number | null,
@@ -43,17 +43,81 @@ export function getLunarDateString(
   }
 }
 
+export function getSolarDateString(
+  year: number | null,
+  month: number | null,
+  day: number | null,
+): string | null {
+  if (!year || !month || !day) return "Chưa rõ";
+
+  try {
+    const lunar = Lunar.fromYmd(
+      year,
+      parseInt(month.toString()),
+      parseInt(day.toString()),
+    );
+    const solar = lunar.getSolar();
+
+    const sDay = solar.getDay().toString().padStart(2, "0");
+    const sMonthRaw = solar.getMonth();
+    const sMonth = Math.abs(sMonthRaw).toString().padStart(2, "0");
+    const sYear = solar.getYear();
+
+    return `${sDay}/${sMonth}/${sYear}`;
+  } catch (error) {
+    console.error("Solar conversion error:", error);
+    return null;
+  }
+}
+
 export function calculateAge(
   birthYear: number | null,
+  birthMonth: number | null,
+  birthDay: number | null,
   deathYear: number | null,
+  deathMonth: number | null,
+  deathDay: number | null,
+  isDeceased: boolean = false,
 ): { age: number; isDeceased: boolean } | null {
   if (!birthYear) return null;
 
-  if (deathYear) {
-    return { age: deathYear - birthYear, isDeceased: true };
+  if (isDeceased || deathYear) {
+    if (deathYear) {
+      let age = deathYear - birthYear;
+      if (birthMonth && birthDay && deathMonth && deathDay) {
+        if (
+          deathMonth < birthMonth ||
+          (deathMonth === birthMonth && deathDay < birthDay)
+        ) {
+          age--;
+        }
+      }
+      return { age, isDeceased: true };
+    }
+    return null;
   }
 
-  return { age: new Date().getFullYear() - birthYear, isDeceased: false };
+  const now = new Date();
+  const vnTimeStr = now.toLocaleString("en-US", {
+    timeZone: "Asia/Ho_Chi_Minh",
+  });
+  const vnDate = new Date(vnTimeStr);
+  const currentYear = vnDate.getFullYear();
+
+  let age = currentYear - birthYear;
+
+  if (birthMonth && birthDay) {
+    const currentMonth = vnDate.getMonth() + 1;
+    const currentDay = vnDate.getDate();
+    if (
+      currentMonth < birthMonth ||
+      (currentMonth === birthMonth && currentDay < birthDay)
+    ) {
+      age--;
+    }
+  }
+
+  return { age, isDeceased: false };
 }
 
 export function getZodiacSign(
@@ -163,15 +227,20 @@ function ganZhiToVietnamese(ganZhi: string): string {
  */
 export function getTodayLunar() {
   const now = new Date();
+  const vnTimeStr = now.toLocaleString("en-US", {
+    timeZone: "Asia/Ho_Chi_Minh",
+  });
+  const vnDate = new Date(vnTimeStr);
+
   const solar = Solar.fromYmd(
-    now.getFullYear(),
-    now.getMonth() + 1,
-    now.getDate(),
+    vnDate.getFullYear(),
+    vnDate.getMonth() + 1,
+    vnDate.getDate(),
   );
   const lunar = solar.getLunar();
 
   return {
-    solarStr: now.toLocaleDateString("vi-VN", {
+    solarStr: vnDate.toLocaleDateString("vi-VN", {
       weekday: "long",
       day: "2-digit",
       month: "long",

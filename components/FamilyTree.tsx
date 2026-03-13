@@ -22,7 +22,10 @@ export default function FamilyTree({
   canEdit?: boolean;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [hideSpouses, setHideSpouses] = useState(false);
+  const [hideDaughtersInLaw, setHideDaughtersInLaw] = useState(false);
+  const [hideSonsInLaw, setHideSonsInLaw] = useState(false);
+  const [hideDaughters, setHideDaughters] = useState(false);
+  const [hideSons, setHideSons] = useState(false);
   const [hideMales, setHideMales] = useState(false);
   const [hideFemales, setHideFemales] = useState(false);
 
@@ -104,7 +107,10 @@ export default function FamilyTree({
     relationships,
     showAvatar,
     scale,
-    hideSpouses,
+    hideDaughtersInLaw,
+    hideSonsInLaw,
+    hideDaughters,
+    hideSons,
     hideMales,
     hideFemales,
   ]);
@@ -116,7 +122,10 @@ export default function FamilyTree({
 
   const getTreeData = (personId: string) =>
     getFilteredTreeData(personId, personsMap, adj, {
-      hideSpouses,
+      hideDaughtersInLaw,
+      hideSonsInLaw,
+      hideDaughters,
+      hideSons,
       hideMales,
       hideFemales,
     });
@@ -190,8 +199,14 @@ export default function FamilyTree({
         handleZoomIn={handleZoomIn}
         handleZoomOut={handleZoomOut}
         handleResetZoom={handleResetZoom}
-        hideSpouses={hideSpouses}
-        setHideSpouses={setHideSpouses}
+        hideDaughtersInLaw={hideDaughtersInLaw}
+        setHideDaughtersInLaw={setHideDaughtersInLaw}
+        hideSonsInLaw={hideSonsInLaw}
+        setHideSonsInLaw={setHideSonsInLaw}
+        hideDaughters={hideDaughters}
+        setHideDaughters={setHideDaughters}
+        hideSons={hideSons}
+        setHideSons={setHideSons}
         hideMales={hideMales}
         setHideMales={setHideMales}
         hideFemales={hideFemales}

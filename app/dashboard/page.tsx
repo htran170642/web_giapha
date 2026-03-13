@@ -45,7 +45,7 @@ export default async function DashboardLaunchpad() {
   const { data: persons } = await supabase
     .from("persons")
     .select(
-      "id, full_name, birth_year, birth_month, birth_day, death_year, death_month, death_day, is_deceased",
+      "id, full_name, birth_year, birth_month, birth_day, death_year, death_month, death_day, death_lunar_year, death_lunar_month, death_lunar_day, is_deceased",
     );
 
   const { data: customEvents } = await supabase

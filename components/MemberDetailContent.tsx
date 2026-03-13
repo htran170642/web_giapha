@@ -7,8 +7,9 @@ import {
   calculateAge,
   formatDisplayDate,
   getLunarDateString,
-  getZodiacSign,
+  getSolarDateString,
   getZodiacAnimal,
+  getZodiacSign,
 } from "@/utils/dateHelpers";
 import { motion, Variants } from "framer-motion";
 import {
@@ -43,7 +44,13 @@ export default function MemberDetailContent({
   const isNoteLong = note.length > 300;
 
   const isDeceased =
-    !!person.death_year || !!person.death_month || !!person.death_day;
+    person.is_deceased ||
+    !!person.death_year ||
+    !!person.death_month ||
+    !!person.death_day ||
+    !!person.death_lunar_year ||
+    !!person.death_lunar_month ||
+    !!person.death_lunar_day;
 
   const containerVariants: Variants = {
     hidden: { opacity: 0 },
@@ -189,16 +196,28 @@ export default function MemberDetailContent({
                     </h3>
                   </div>
                   <div className="flex items-center gap-1">
-                    {person.birth_year && getZodiacAnimal(person.birth_year, person.birth_month, person.birth_day) && (
-                      <span className="text-[10px] font-sans font-bold text-rose-700 bg-rose-50 border border-rose-200/60 rounded-md px-1.5 py-0.5 whitespace-nowrap shadow-xs tracking-wider">
-                        Tuổi {getZodiacAnimal(person.birth_year, person.birth_month, person.birth_day)}
-                      </span>
-                    )}
-                    {person.birth_day && person.birth_month && getZodiacSign(person.birth_day, person.birth_month) && (
-                      <span className="text-[10px] font-sans font-bold text-indigo-700 bg-indigo-50 border border-indigo-200/60 rounded-md px-1.5 py-0.5 whitespace-nowrap shadow-xs tracking-wider">
-                        {getZodiacSign(person.birth_day, person.birth_month)}
-                      </span>
-                    )}
+                    {person.birth_year &&
+                      getZodiacAnimal(
+                        person.birth_year,
+                        person.birth_month,
+                        person.birth_day,
+                      ) && (
+                        <span className="text-[10px] font-sans font-bold text-rose-700 bg-rose-50 border border-rose-200/60 rounded-md px-1.5 py-0.5 whitespace-nowrap shadow-xs tracking-wider">
+                          Tuổi{" "}
+                          {getZodiacAnimal(
+                            person.birth_year,
+                            person.birth_month,
+                            person.birth_day,
+                          )}
+                        </span>
+                      )}
+                    {person.birth_day &&
+                      person.birth_month &&
+                      getZodiacSign(person.birth_day, person.birth_month) && (
+                        <span className="text-[10px] font-sans font-bold text-indigo-700 bg-indigo-50 border border-indigo-200/60 rounded-md px-1.5 py-0.5 whitespace-nowrap shadow-xs tracking-wider">
+                          {getZodiacSign(person.birth_day, person.birth_month)}
+                        </span>
+                      )}
                   </div>
                 </div>
                 <div className="space-y-1.5 pl-4 border-l-2 border-stone-100">
@@ -240,24 +259,43 @@ export default function MemberDetailContent({
                   </div>
                   <div className="space-y-1.5 pl-4 border-l-2 border-stone-100">
                     <p className="text-stone-800 font-semibold text-sm sm:text-base">
-                      {formatDisplayDate(
-                        person.death_year,
-                        person.death_month,
-                        person.death_day,
-                      )}
+                      {person.death_day ||
+                      person.death_month ||
+                      person.death_year
+                        ? formatDisplayDate(
+                            person.death_year,
+                            person.death_month,
+                            person.death_day,
+                          )
+                        : getSolarDateString(
+                            person.death_lunar_year,
+                            person.death_lunar_month,
+                            person.death_lunar_day,
+                          ) || "Chưa rõ"}
                     </p>
                     {(person.death_year ||
                       person.death_month ||
-                      person.death_day) && (
-                      <p className="text-xs font-medium text-stone-500 flex items-center gap-1.5">
+                      person.death_day ||
+                      person.death_lunar_year ||
+                      person.death_lunar_month ||
+                      person.death_lunar_day) && (
+                      <p className="text-sm font-medium text-stone-500 flex items-center gap-1.5">
                         <span className="text-[10px] border border-stone-200/60 bg-stone-50/80 rounded px-1.5 py-0.5">
                           Âm lịch
                         </span>
-                        {getLunarDateString(
-                          person.death_year,
-                          person.death_month,
-                          person.death_day,
-                        ) || "Chưa rõ"}
+                        {person.death_lunar_day ||
+                        person.death_lunar_month ||
+                        person.death_lunar_year
+                          ? formatDisplayDate(
+                              person.death_lunar_year,
+                              person.death_lunar_month,
+                              person.death_lunar_day,
+                            )
+                          : getLunarDateString(
+                              person.death_year,
+                              person.death_month,
+                              person.death_day,
+                            ) || "Chưa rõ"}
                       </p>
                     )}
                   </div>
@@ -268,7 +306,12 @@ export default function MemberDetailContent({
               {(() => {
                 const ageData = calculateAge(
                   person.birth_year,
+                  person.birth_month,
+                  person.birth_day,
                   person.death_year,
+                  person.death_month,
+                  person.death_day,
+                  isDeceased,
                 );
                 if (!ageData) return null;
                 return (

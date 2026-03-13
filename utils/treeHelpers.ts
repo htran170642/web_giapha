@@ -11,7 +11,10 @@ export interface AdjacencyLists {
 }
 
 export interface TreeFilterOptions {
-  hideSpouses: boolean;
+  hideDaughtersInLaw: boolean;
+  hideSonsInLaw: boolean;
+  hideDaughters: boolean;
+  hideSons: boolean;
   hideMales: boolean;
   hideFemales: boolean;
 }
@@ -22,7 +25,7 @@ export interface TreeFilterOptions {
  */
 export function buildAdjacencyLists(
   relationships: Relationship[],
-  personsMap: Map<string, Person>
+  personsMap: Map<string, Person>,
 ): AdjacencyLists {
   const spouses = new Map<string, SpouseData[]>();
   const children = new Map<string, Person[]>();
@@ -66,13 +69,21 @@ export function getFilteredTreeData(
   personId: string,
   personsMap: Map<string, Person>,
   adj: AdjacencyLists,
-  filters: TreeFilterOptions
+  filters: TreeFilterOptions,
 ) {
-  const { hideSpouses, hideMales, hideFemales } = filters;
+  const {
+    hideDaughtersInLaw,
+    hideSonsInLaw,
+    hideDaughters,
+    hideSons,
+    hideMales,
+    hideFemales,
+  } = filters;
 
   let spousesList = adj.spousesByPersonId.get(personId) || [];
   spousesList = spousesList.filter((s) => {
-    if (hideSpouses) return false;
+    if (hideDaughtersInLaw && s.person.gender === "female") return false;
+    if (hideSonsInLaw && s.person.gender === "male") return false;
     if (hideMales && s.person.gender === "male") return false;
     if (hideFemales && s.person.gender === "female") return false;
     return true;
@@ -80,6 +91,8 @@ export function getFilteredTreeData(
 
   let childrenList = adj.childrenByPersonId.get(personId) || [];
   childrenList = childrenList.filter((c) => {
+    if (hideDaughters && c.gender === "female") return false;
+    if (hideSons && c.gender === "male") return false;
     if (hideMales && c.gender === "male") return false;
     if (hideFemales && c.gender === "female") return false;
     return true;

@@ -23,7 +23,10 @@ export default function MindmapTree({
   canEdit,
 }: MindmapTreeProps) {
   const { showAvatar, setMemberModalId } = useDashboard();
-  const [hideSpouses, setHideSpouses] = useState(false);
+  const [hideDaughtersInLaw, setHideDaughtersInLaw] = useState(false);
+  const [hideSonsInLaw, setHideSonsInLaw] = useState(false);
+  const [hideDaughters, setHideDaughters] = useState(false);
+  const [hideSons, setHideSons] = useState(false);
   const [hideMales, setHideMales] = useState(false);
   const [hideFemales, setHideFemales] = useState(false);
   const [expandSignal, setExpandSignal] = useState<{
@@ -38,7 +41,10 @@ export default function MindmapTree({
       personsMap,
       relationships,
       adj,
-      hideSpouses,
+      hideDaughtersInLaw,
+      hideSonsInLaw,
+      hideDaughters,
+      hideSons,
       hideMales,
       hideFemales,
       showAvatar,
@@ -48,7 +54,10 @@ export default function MindmapTree({
   }, [
     personsMap,
     relationships,
-    hideSpouses,
+    hideDaughtersInLaw,
+    hideSonsInLaw,
+    hideDaughters,
+    hideSons,
     hideMales,
     hideFemales,
     showAvatar,
@@ -72,8 +81,14 @@ export default function MindmapTree({
   return (
     <div className="w-full h-full relative p-4 sm:p-6 lg:p-8 min-h-[calc(100vh-140px)] flex justify-start lg:justify-center overflow-x-auto">
       <MindmapToolbar
-        hideSpouses={hideSpouses}
-        setHideSpouses={setHideSpouses}
+        hideDaughtersInLaw={hideDaughtersInLaw}
+        setHideDaughtersInLaw={setHideDaughtersInLaw}
+        hideSonsInLaw={hideSonsInLaw}
+        setHideSonsInLaw={setHideSonsInLaw}
+        hideDaughters={hideDaughters}
+        setHideDaughters={setHideDaughters}
+        hideSons={hideSons}
+        setHideSons={setHideSons}
         hideMales={hideMales}
         setHideMales={setHideMales}
         hideFemales={hideFemales}

@@ -85,6 +85,9 @@ export function computeEvents(
     death_year: number | null;
     death_month: number | null;
     death_day: number | null;
+    death_lunar_year: number | null;
+    death_lunar_month: number | null;
+    death_lunar_day: number | null;
     is_deceased: boolean;
   }[],
   customEvents: CustomEventRecord[] = []
@@ -120,14 +123,23 @@ export function computeEvents(
     }
 
     // ── Death anniversary (lunar) ────────────────────────────────────
-    if (p.is_deceased && p.death_month && p.death_day) {
+    if (p.is_deceased && ((p.death_lunar_month && p.death_lunar_day) || (p.death_month && p.death_day))) {
       try {
-        // Convert the solar death date to a lunar date
-        const deathYear = p.death_year ?? new Date().getFullYear();
-        const solar = Solar.fromYmd(deathYear, p.death_month, p.death_day);
-        const lunar = solar.getLunar();
-        const lMonth = Math.abs(lunar.getMonth()); // abs to handle leap month
-        const lDay = lunar.getDay();
+        let lMonth: number;
+        let lDay: number;
+        
+        // Prefer exact lunar date from DB
+        if (p.death_lunar_month && p.death_lunar_day) {
+          lMonth = p.death_lunar_month;
+          lDay = p.death_lunar_day;
+        } else {
+          // Fallback: Convert the solar death date to a lunar date
+          const deathYear = p.death_year ?? new Date().getFullYear();
+          const solar = Solar.fromYmd(deathYear, p.death_month as number, p.death_day as number);
+          const lunar = solar.getLunar();
+          lMonth = Math.abs(lunar.getMonth()); // abs to handle leap month
+          lDay = lunar.getDay();
+        }
 
         const next = nextSolarForLunar(lMonth, lDay, today);
         if (!next) continue;
@@ -143,7 +155,9 @@ export function computeEvents(
           nextOccurrence: next,
           daysUntil,
           eventDateLabel: `${lDay.toString().padStart(2, "0")}/${lMonth.toString().padStart(2, "0")} ÂL`,
-          originYear: p.death_year,
+          originYear: (p.death_lunar_year ?? p.death_year) || null,
+          originMonth: p.death_lunar_month ?? p.death_month,
+          originDay: p.death_lunar_day ?? p.death_day,
           isDeceased: p.is_deceased,
         });
       } catch {

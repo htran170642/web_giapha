@@ -8,8 +8,14 @@ import { useDashboard } from "./DashboardContext";
 import ExportButton from "./ExportButton";
 
 export interface BaseToolbarProps {
-  hideSpouses: boolean;
-  setHideSpouses: (val: boolean) => void;
+  hideDaughtersInLaw: boolean;
+  setHideDaughtersInLaw: (val: boolean) => void;
+  hideSonsInLaw: boolean;
+  setHideSonsInLaw: (val: boolean) => void;
+  hideDaughters: boolean;
+  setHideDaughters: (val: boolean) => void;
+  hideSons: boolean;
+  setHideSons: (val: boolean) => void;
   hideMales: boolean;
   setHideMales: (val: boolean) => void;
   hideFemales: boolean;
@@ -19,8 +25,14 @@ export interface BaseToolbarProps {
 }
 
 export default function BaseToolbar({
-  hideSpouses,
-  setHideSpouses,
+  hideDaughtersInLaw,
+  setHideDaughtersInLaw,
+  hideSonsInLaw,
+  setHideSonsInLaw,
+  hideDaughters,
+  setHideDaughters,
+  hideSons,
+  setHideSons,
   hideMales,
   setHideMales,
   hideFemales,
@@ -111,11 +123,38 @@ export default function BaseToolbar({
               <label className="flex items-center gap-2 text-sm text-stone-600 cursor-pointer hover:text-stone-900 transition-colors select-none">
                 <input
                   type="checkbox"
-                  checked={hideSpouses}
-                  onChange={(e) => setHideSpouses(e.target.checked)}
+                  checked={hideDaughtersInLaw}
+                  onChange={(e) => setHideDaughtersInLaw(e.target.checked)}
                   className="rounded text-amber-600 focus:ring-amber-500 cursor-pointer size-4"
                 />
-                Ẩn dâu/rể
+                Ẩn dâu
+              </label>
+              <label className="flex items-center gap-2 text-sm text-stone-600 cursor-pointer hover:text-stone-900 transition-colors select-none">
+                <input
+                  type="checkbox"
+                  checked={hideSonsInLaw}
+                  onChange={(e) => setHideSonsInLaw(e.target.checked)}
+                  className="rounded text-amber-600 focus:ring-amber-500 cursor-pointer size-4"
+                />
+                Ẩn rể
+              </label>
+              <label className="flex items-center gap-2 text-sm text-stone-600 cursor-pointer hover:text-stone-900 transition-colors select-none">
+                <input
+                  type="checkbox"
+                  checked={hideDaughters}
+                  onChange={(e) => setHideDaughters(e.target.checked)}
+                  className="rounded text-amber-600 focus:ring-amber-500 cursor-pointer size-4"
+                />
+                Ẩn con gái
+              </label>
+              <label className="flex items-center gap-2 text-sm text-stone-600 cursor-pointer hover:text-stone-900 transition-colors select-none">
+                <input
+                  type="checkbox"
+                  checked={hideSons}
+                  onChange={(e) => setHideSons(e.target.checked)}
+                  className="rounded text-amber-600 focus:ring-amber-500 cursor-pointer size-4"
+                />
+                Ẩn con trai
               </label>
               <label className="flex items-center gap-2 text-sm text-stone-600 cursor-pointer hover:text-stone-900 transition-colors select-none">
                 <input

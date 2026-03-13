@@ -1,7 +1,6 @@
 "use client";
 
 import { Person, Relationship } from "@/types";
-import { formatDisplayDate } from "@/utils/dateHelpers";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import Image from "next/image";
@@ -14,7 +13,10 @@ export interface MindmapContextData {
   personsMap: Map<string, Person>;
   relationships: Relationship[];
   adj: AdjacencyLists;
-  hideSpouses: boolean;
+  hideDaughtersInLaw: boolean;
+  hideSonsInLaw: boolean;
+  hideDaughters: boolean;
+  hideSons: boolean;
   hideMales: boolean;
   hideFemales: boolean;
   showAvatar: boolean;
@@ -24,7 +26,10 @@ export interface MindmapContextData {
 
 export const getTreeData = (personId: string, ctx: MindmapContextData) => {
   return getFilteredTreeData(personId, ctx.personsMap, ctx.adj, {
-    hideSpouses: ctx.hideSpouses,
+    hideDaughtersInLaw: ctx.hideDaughtersInLaw,
+    hideSonsInLaw: ctx.hideSonsInLaw,
+    hideDaughters: ctx.hideDaughters,
+    hideSons: ctx.hideSons,
     hideMales: ctx.hideMales,
     hideFemales: ctx.hideFemales,
   });
@@ -159,13 +164,9 @@ export const MindmapNode = memo(
                           />
                         </svg>
                         <span className="truncate">
-                          {formatDisplayDate(
-                            data.person.birth_year,
-                            data.person.birth_month,
-                            data.person.birth_day,
-                          )}
+                          {data.person.birth_year || "Chưa rõ"}
                           {data.person.is_deceased &&
-                            ` → ${formatDisplayDate(data.person.death_year, data.person.death_month, data.person.death_day)}`}
+                            ` → ${data.person.death_lunar_year || data.person.death_year || "Chưa rõ"}`}
                         </span>
                       </span>
                       {(data.person.is_deceased || data.person.is_in_law) && (

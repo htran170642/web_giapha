@@ -15,7 +15,7 @@ export default function DashboardMemberList({
 }) {
   const { setShowCreateMember } = useDashboard();
   const [searchTerm, setSearchTerm] = useState("");
-  const [sortOption, setSortOption] = useState("updated_desc");
+  const [sortOption, setSortOption] = useState("generation_asc");
 
   const [filterOption, setFilterOption] = useState("all");
 
@@ -189,11 +189,49 @@ export default function DashboardMemberList({
       </div>
 
       {sortedPersons.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {sortedPersons.map((person) => (
-            <PersonCard key={person.id} person={person} />
-          ))}
-        </div>
+        sortOption.includes("generation") ? (
+          <div className="space-y-12">
+            {Object.entries(
+              sortedPersons.reduce(
+                (acc, person) => {
+                  const gen = person.generation || 0;
+                  if (!acc[gen]) acc[gen] = [];
+                  acc[gen].push(person);
+                  return acc;
+                },
+                {} as Record<number, Person[]>,
+              ),
+            )
+              .sort(([genA], [genB]) => {
+                if (sortOption === "generation_desc") {
+                  return Number(genB) - Number(genA);
+                }
+                return Number(genA) - Number(genB);
+              })
+              .map(([gen, persons]) => (
+                <div key={gen} className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <div className="h-px flex-1 bg-stone-200"></div>
+                    <h3 className="text-lg font-serif font-bold text-amber-800 bg-amber-50 px-4 py-1.5 rounded-full border border-amber-200/50 shadow-sm">
+                      {gen === "0" ? "Chưa xác định đời" : `Đời thứ ${gen}`}
+                    </h3>
+                    <div className="h-px flex-1 bg-stone-200"></div>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {persons.map((person) => (
+                      <PersonCard key={person.id} person={person} />
+                    ))}
+                  </div>
+                </div>
+              ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {sortedPersons.map((person) => (
+              <PersonCard key={person.id} person={person} />
+            ))}
+          </div>
+        )
       ) : (
         <div className="text-center py-12 text-stone-400 italic">
           {initialPersons.length > 0
