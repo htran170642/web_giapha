@@ -166,7 +166,7 @@ export default function DashboardMemberList({
         if (!placedInLaws.has(p.id)) ordered.push(p);
       });
 
-      return { gen, persons: ordered };
+      return { gen: Number(gen), persons: ordered };
     });
   }, [filteredPersons, initialPersons, initialRelationships, sortOption]);
 
