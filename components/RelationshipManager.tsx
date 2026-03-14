@@ -22,6 +22,7 @@ interface EnrichedRelationship {
   direction: "parent" | "child" | "spouse" | "child_in_law";
   targetPerson: Person;
   note: string | null;
+  spouseChildOrder?: number | null; // birth_order of the child they married (for in-laws)
 }
 
 export default function RelationshipManager({
@@ -172,6 +173,7 @@ export default function RelationshipManager({
                 direction: "child_in_law",
                 targetPerson: spousePerson,
                 note: noteLabel,
+                spouseChildOrder: childPerson.birth_order,
               });
             }
           });
@@ -463,6 +465,20 @@ export default function RelationshipManager({
     relationships
       .filter((r) => r.direction === type)
       .sort((a, b) => {
+        // For in-laws, sort by their spouse-child's birth_order
+        if (type === "child_in_law") {
+          const orderA = a.spouseChildOrder;
+          const orderB = b.spouseChildOrder;
+          if (orderA != null && orderB != null) return orderA - orderB;
+          if (orderA != null) return -1;
+          if (orderB != null) return 1;
+          return 0;
+        }
+        const orderA = a.targetPerson.birth_order;
+        const orderB = b.targetPerson.birth_order;
+        if (orderA != null && orderB != null) return orderA - orderB;
+        if (orderA != null) return -1;
+        if (orderB != null) return 1;
         const yearA = a.targetPerson.birth_year;
         const yearB = b.targetPerson.birth_year;
         if (yearA == null && yearB == null) return 0;
