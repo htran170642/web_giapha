@@ -11,10 +11,9 @@ import { useCallback, useContext, useEffect, useState } from "react";
 import DefaultAvatar from "./DefaultAvatar";
 
 interface RelationshipManagerProps {
-  personId: string;
+  person: Person;
   isAdmin: boolean;
   canEdit?: boolean;
-  personGender: string; // Passed down to calculate default spouse gender
   onStatsLoaded?: (stats: {
     biologicalChildren: number;
     maleBiologicalChildren: number;
@@ -35,16 +34,18 @@ interface EnrichedRelationship {
 }
 
 export default function RelationshipManager({
-  personId,
+  person,
   isAdmin,
   canEdit = false,
-  personGender,
   onStatsLoaded,
 }: RelationshipManagerProps) {
   const supabase = createClient();
   const dashboardContext = useContext(DashboardContext);
   const { setMemberModalId } = useDashboard();
   const router = useRouter();
+  
+  const personId = person.id;
+  const personGender = person.gender;
 
   // If inside DashboardProvider → open modal; otherwise → navigate to full page
   const handlePersonClick = (id: string) => {
@@ -355,6 +356,47 @@ export default function RelationshipManager({
 
       if (error) throw error;
 
+      // Auto-update target person generation and is_in_law if currently missing
+      try {
+        const { data: targetPerson } = await supabase
+          .from("persons")
+          .select("generation, is_in_law")
+          .eq("id", selectedTargetId)
+          .single();
+
+        if (
+          targetPerson &&
+          (targetPerson.generation == null || targetPerson.is_in_law == null)
+        ) {
+          const updates: { generation?: number; is_in_law?: boolean } = {};
+
+          if (targetPerson.generation == null && person.generation != null) {
+            if (newRelDirection === "child")
+              updates.generation = person.generation + 1;
+            else if (newRelDirection === "parent")
+              updates.generation = person.generation - 1;
+            else if (newRelDirection === "spouse")
+              updates.generation = person.generation;
+          }
+
+          if (targetPerson.is_in_law == null) {
+            if (newRelDirection === "child" || newRelDirection === "parent")
+              updates.is_in_law = false;
+            else if (newRelDirection === "spouse")
+              updates.is_in_law = person.is_in_law === true ? false : true;
+          }
+
+          if (Object.keys(updates).length > 0) {
+            await supabase
+              .from("persons")
+              .update(updates)
+              .eq("id", selectedTargetId);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to auto-update target person properties", err);
+      }
+
       setIsAdding(false);
       setSearchTerm("");
       setSelectedTargetId(null);
@@ -394,10 +436,17 @@ export default function RelationshipManager({
           gender: "male" | "female" | "other";
           birth_year?: number;
           birth_order?: number;
+          is_in_law?: boolean;
+          generation?: number;
         } = {
           full_name: child.name.trim(),
           gender: child.gender,
+          is_in_law: false,
         };
+
+        if (person.generation != null) {
+          personPayload.generation = person.generation + 1;
+        }
         if (child.birthYear.trim() !== "") {
           const year = parseInt(child.birthYear);
           if (!isNaN(year)) personPayload.birth_year = year;
@@ -493,10 +542,17 @@ export default function RelationshipManager({
         full_name: string;
         gender: "male" | "female" | "other";
         birth_year?: number;
+        is_in_law?: boolean;
+        generation?: number;
       } = {
         full_name: newSpouseName.trim(),
         gender: newSpouseGender,
+        is_in_law: person.is_in_law === true ? false : true,
       };
+
+      if (person.generation != null) {
+        personPayload.generation = person.generation;
+      }
 
       if (newSpouseBirthYear.trim() !== "") {
         const year = parseInt(newSpouseBirthYear);
