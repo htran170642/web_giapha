@@ -2,9 +2,27 @@ import { Person, Relationship } from "@/types";
 import JSZip from "jszip";
 import Papa from "papaparse";
 
+interface PersonDetailsPrivateRow {
+  person_id: string;
+  phone_number: string | null;
+  occupation: string | null;
+  current_residence: string | null;
+}
+
+interface CustomEventRow {
+  id: string;
+  name: string;
+  content: string | null;
+  event_date: string;
+  location: string | null;
+  created_by: string | null;
+}
+
 export async function exportToCsvZip(data: {
   persons: Partial<Person>[];
   relationships: Partial<Relationship>[];
+  person_details_private?: PersonDetailsPrivateRow[];
+  custom_events?: CustomEventRow[];
 }): Promise<Blob> {
   const personsCsv = Papa.unparse(data.persons);
   const relationshipsCsv = Papa.unparse(data.relationships);
@@ -13,6 +31,17 @@ export async function exportToCsvZip(data: {
   zip.file("persons.csv", personsCsv);
   zip.file("relationships.csv", relationshipsCsv);
 
+  if (data.person_details_private && data.person_details_private.length > 0) {
+    zip.file(
+      "person_details_private.csv",
+      Papa.unparse(data.person_details_private),
+    );
+  }
+
+  if (data.custom_events && data.custom_events.length > 0) {
+    zip.file("custom_events.csv", Papa.unparse(data.custom_events));
+  }
+
   const zipBlob = await zip.generateAsync({ type: "blob" });
   return zipBlob;
 }
@@ -20,6 +49,8 @@ export async function exportToCsvZip(data: {
 export async function parseCsvZip(zipBlob: Blob): Promise<{
   persons: Partial<Person>[];
   relationships: Partial<Relationship>[];
+  person_details_private?: PersonDetailsPrivateRow[];
+  custom_events?: CustomEventRow[];
 }> {
   const zip = new JSZip();
   const loadedZip = await zip.loadAsync(zipBlob);
@@ -59,8 +90,48 @@ export async function parseCsvZip(zipBlob: Blob): Promise<{
     console.error("Lỗi parse relationships.csv:", relationshipsParsed.errors);
   }
 
-  return {
+  const result: {
+    persons: Partial<Person>[];
+    relationships: Partial<Relationship>[];
+    person_details_private?: PersonDetailsPrivateRow[];
+    custom_events?: CustomEventRow[];
+  } = {
     persons: personsParsed.data,
     relationships: relationshipsParsed.data,
   };
+
+  // Parse person_details_private.csv (optional, backward compat)
+  const privateFile = loadedZip.file("person_details_private.csv");
+  if (privateFile) {
+    const privateCsvStr = await privateFile.async("text");
+    const privateParsed = Papa.parse<PersonDetailsPrivateRow>(privateCsvStr, {
+      header: true,
+      skipEmptyLines: true,
+      dynamicTyping: true,
+    });
+    if (privateParsed.errors.length > 0) {
+      console.error(
+        "Lỗi parse person_details_private.csv:",
+        privateParsed.errors,
+      );
+    }
+    result.person_details_private = privateParsed.data;
+  }
+
+  // Parse custom_events.csv (optional, backward compat)
+  const eventsFile = loadedZip.file("custom_events.csv");
+  if (eventsFile) {
+    const eventsCsvStr = await eventsFile.async("text");
+    const eventsParsed = Papa.parse<CustomEventRow>(eventsCsvStr, {
+      header: true,
+      skipEmptyLines: true,
+      dynamicTyping: true,
+    });
+    if (eventsParsed.errors.length > 0) {
+      console.error("Lỗi parse custom_events.csv:", eventsParsed.errors);
+    }
+    result.custom_events = eventsParsed.data;
+  }
+
+  return result;
 }
